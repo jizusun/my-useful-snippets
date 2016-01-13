@@ -6,10 +6,10 @@ import json
 import re
 
 journals = []
-base_url = "http://qhzk.lib.tsinghua.edu.cn:8080"
+base_url = "http://qhzk.lib.tsinghua.edu.cn:8080/Tsinghua_Journal"
 
 def get_toc():
-    toc_page = base_url + "/Tsinghua_Journal/year.html"
+    toc_page = base_url + "/year.html"
     response = requests.get(toc_page)
     response.encoding = 'utf8'
     doc = html.fromstring(response.text)
@@ -24,8 +24,8 @@ def get_toc():
                     'link': base_url + url, 
                     }
             print one_journal['title']
-            if one_journal['title'] == u'总第449期':
-                break
+            # if one_journal['title'] == u'总第449期':
+                # break
             journals.append(one_journal)
 
 def get_page_count():
@@ -41,8 +41,8 @@ def get_page_count():
 
 def get_page_in_range(start, count):
     # start: 1, count: 3
-    turnpage_url = base_url + "/Tsinghua_Journal/turnPage"
-    showimage_url = base_url + '/Tsinghua_Journal/showImage'
+    turnpage_url = base_url +  "/turnPage"
+    showimage_url = base_url + '/showImage'
 
     for journal in journals: 
         for page_no in range(start, start+count):
