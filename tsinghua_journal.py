@@ -5,15 +5,19 @@ from lxml import html
 import json
 import re
 
+# 用于保存每一期刊物的元数据
 journals = []
-base_url = "http://qhzk.lib.tsinghua.edu.cn:8080/Tsinghua_Journal"
+# 用于跟网站子目录拼接
+base_url = "http://qhzk.lib.tsinghua.edu.cn:8080"
 
+# 用于获取每一期的刊名和链接
 def get_toc():
-    toc_page = base_url + "/year.html"
+    toc_page = base_url + "/Tsinghua_Journal/year.html"
     response = requests.get(toc_page)
-    response.encoding = 'utf8'
+    # 默认编码为ISO-8859-1，此处将编码修正为UTF-8
+    # https://github.com/kennethreitz/requests/issues/1604
+    response.encoding = 'utf-8'
     doc = html.fromstring(response.text)
-
 
     for link in doc.xpath('//table//a'):
         url = link.get('href')
@@ -23,9 +27,7 @@ def get_toc():
                     'title': description,
                     'link': base_url + url, 
                     }
-            print one_journal['title']
-            # if one_journal['title'] == u'总第449期':
-                # break
+            print one_journal['title'],one_journal['link']
             journals.append(one_journal)
 
 def get_page_count():
@@ -33,7 +35,7 @@ def get_page_count():
         response = requests.get(journal['link'])
         doc = html.fromstring(response.text)
         page_count = doc.xpath('//div[@class="command-bar"]/a[last()]/@href')[0]
-        # page_count: 'javascript:gotoPage(17)'
+        # page_count的格式如 'javascript:gotoPage(17)'
         page_count = re.search(r'\d+', page_count)
         page_count = page_count.group()
         journal['page_count'] = page_count
@@ -41,27 +43,25 @@ def get_page_count():
 
 def get_page_in_range(start, count):
     # start: 1, count: 3
-    turnpage_url = base_url +  "/turnPage"
-    showimage_url = base_url + '/showImage'
 
-    for journal in journals: 
+    for journal in journals[:3]: 
         for page_no in range(start, start+count):
             data = {
                     'action': 'image',
                     'jumpPage': page_no,
-                    }
+                   }
             turnpage_response = requests.post(journal['link'], data=data)
             print turnpage_response.url
             showimage_payload = {
-                    'totalvolume': journal['title'],
-                    'pageno': page_no,
                     'rand': 'aaa'
                     }
-            response = requests.get(showimage_url, params=showimage_payload)
-            dirname = '/home/jizusun/testbed/mg/tsinghua_downloads/'
-            filename = u'%s-第%d页.jpg' % (journal['title'], page_no)
+            showimage_url = journal['link'].replace('turnPage', 'showImage')
+            image_response = requests.get(showimage_url, params=showimage_payload)
+            print image_response.url
+            dirname = '/home/sunjizu/Documents/python-dev-env/tsinghua_downloads/'
+            filename = u'%s-第%d页.png' % (journal['title'], page_no)
             with open(dirname+filename, 'wb') as f:
-                f.write(response.content)
+                f.write(image_response.content)
                 print '%s saved' % filename
         
        # print json.dumps(journal, ensure_ascii=False).encode('utf8')
@@ -77,5 +77,5 @@ def save_to_file():
 
 if __name__ == '__main__':
     get_toc()
+    # get_page_count()
     get_page_in_range(1, 3)
-
