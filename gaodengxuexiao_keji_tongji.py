@@ -75,9 +75,9 @@ def get_files_in_part(part):
         tds = row.select('td')
         file_links = tds[0].select('a')
         if len(file_links) == 1:
-            file['file_name'] = tds[1].a.getText().strip() + '.caj'
+            file['file_name'] = tds[1].a.getText().strip() + '.pdf'
             file['file_name'] = file['file_name'].replace(' ', '_')
-            file['link'] =  "http://tongji.cnki.net/kns55/" + tds[0].a.get('href')[3:] # + 'pdf&dflag=pdfdown'
+            file['link'] =  "http://tongji.cnki.net/kns55/" + tds[0].a.get('href')[3:] + 'pdf&dflag=pdfdown'
         else:
             file['file_name'] = tds[1].a.getText().strip() + '.xls'
             file['file_name'] = file['file_name'].replace(' ', '_')
@@ -97,6 +97,7 @@ def get_pages_in_range(year_limit=None):
         print year['title'], parts
         # 遍历这一年的每一部分
         # 为了测试先看第一部分
+        #for part in parts[1:2]:
         for part in parts:
             # 创建该部分的文件夹
             part_dir = os.path.join(year_dir, part['text']) 
@@ -108,8 +109,10 @@ def get_pages_in_range(year_limit=None):
             for file in files:
                 # print sess.headers
                 file_response = sess.get(file['link'])
+                # file_response = sess.get(file['link'], allow_redirects=False)
                 file_path = os.path.join(part_dir, file['file_name'])
                 print u'保存：', file_path
+                # print file_response.history, file_response.text
                 with open(file_path, 'wb') as f:
                     f.write(file_response.content)
 
